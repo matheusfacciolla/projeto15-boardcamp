@@ -4,15 +4,14 @@ export async function getAllGames(req, res) {
     const { name } = req.query;
 
     try {
-        //tentar resolver problema da letra maiuscula na querystring !!!!
         if (name) {
-            const result = await connection.query(`SELECT * FROM games WHERE name LIKE $1`, [`${name}%`]);
-            console.log("RESULT QUERY", result.rows)
+            const nameCapitalized = name.charAt(0).toUpperCase()+name.slice(1);
+            const result = await connection.query(`SELECT * FROM games WHERE (name LIKE $1 OR name LIKE $2)`, [`${nameCapitalized}%`, `${name}%`]);
             res.status(200).send(result.rows);
+        } else {
+            const result = await connection.query("SELECT * FROM games");
+            res.send(result.rows);
         }
-
-        const result = await connection.query("SELECT * FROM games");
-        res.send(result.rows);
 
     } catch (e) {
         console.log(e);

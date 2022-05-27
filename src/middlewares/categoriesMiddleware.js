@@ -20,7 +20,7 @@ export async function validateCategory(req, res, next) {
 
     } catch (e) {
         console.log(e);
-        res.status(500).send("Ocorreu um erro registrar o jogo!");
+        res.status(500).send("Ocorreu um erro registrar a categoria");
         return;
     }
 

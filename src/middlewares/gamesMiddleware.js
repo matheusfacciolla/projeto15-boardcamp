@@ -14,7 +14,7 @@ export async function validateGame(req, res, next) {
     
     try {
         const resultName = await connection.query(`SELECT * FROM games WHERE name = $1`, [name]);
-        const resultCategoryId = await connection.query(`SELECT * FROM categories WHERE name = $1`, [categoryId]);
+        const resultCategoryId = await connection.query(`SELECT * FROM categories WHERE id = $1`, [categoryId]);
         
         if (resultName.rows[0]) {
             res.sendStatus(409);
