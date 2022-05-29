@@ -54,7 +54,7 @@ export async function addCustomer(req, res) {
 
     } catch (e) {
         console.log(e);
-        res.status(500).send("Ocorreu um erro registrar o cliente!");
+        res.status(500).send("Ocorreu um erro ao registrar o cliente!");
         return;
     }
 }

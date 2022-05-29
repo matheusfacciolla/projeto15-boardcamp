@@ -1,4 +1,5 @@
 import dayjs from "dayjs";
+import moment from 'moment';
 
 import connection from "../../db.js";
 
@@ -7,11 +8,48 @@ export async function getAllRentals(req, res) {
 
     try {
         if (customerId || gameId) {
-            const result = await connection.query(`SELECT * FROM rentals WHERE (name LIKE $1 OR name LIKE $2)`, [`${customerId}%`, `${gameId}%`]);
-            res.status(200).send(result.rows);
+            const resultCustomerId = await connection.query(`SELECT * FROM rentals WHERE "customerId" = $1`, [customerId]);
+            const resultGameId = await connection.query(`SELECT * FROM rentals WHERE "gameId" = $1`, [ gameId]);
+
+            if(resultCustomerId.rows.length != 0){
+                res.status(200).send(resultCustomerId.rows);
+            }
+
+            if(resultGameId.rows.length != 0){
+                res.status(200).send(resultGameId.rows);
+            }
+            
         } else {
-            const result = await connection.query("SELECT * FROM rentals");
-            res.send(result.rows);
+            const result = await connection.query(`
+            SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName", categories.id AS "categoryId", categories.name AS "categoryName" 
+            FROM rentals
+            JOIN customers ON customers.id = rentals."customerId"
+            JOIN games ON games.id = rentals."gameId"
+            JOIN categories ON games."categoryId" = categories.id;
+        `)
+
+        let rentals = result.rows;
+        const rentalsList = [];
+        
+        for (let rental of rentals) {
+            rental = {
+                ...rental,
+                customer: {
+                    id: rental.customerId,
+                    name: rental.customerName
+                },
+                game: {
+                    id: rental.gameId,
+                    name: rental.gameName,
+                    categoryId: rental.categoryId,
+                    categoryName: rental.categoryName
+                }
+            }
+
+            rentalsList.push(rental);
+        }
+
+        res.status(200).send(rentalsList);
         }
 
     } catch (e) {
@@ -23,19 +61,56 @@ export async function getAllRentals(req, res) {
 
 export async function addRental(req, res) {
     const { customerId, gameId, daysRented } = req.body;
-    const originalPrice = daysRented * pricePerDay;
-    const rentDate = dayjs(Date.now()).format("YYYY-MM-DD");
 
     try {
+        const resultGames = await connection.query(`SELECT * FROM games WHERE id = $1`, [gameId]);
+        const originalPrice = daysRented * resultGames.rows[0].pricePerDay;
+        const rentDate = dayjs(Date.now()).format("YYYY-MM-DD");
+
         await connection.query(`
-        INSERT INTO games ("customerId", "gameId", "daysRented", "returnDate", "delayFee", "originalPrice", "rentDate") 
-        VALUES ($1, $2, $3);
-        `, [customerId, gameId, daysRented, originalPrice, rentDate]);
+        INSERT INTO rentals ("customerId", "gameId", "rentDate", "daysRented", "originalPrice") 
+        VALUES ($1, $2, $3, $4, $5);
+        `, [customerId, gameId, rentDate, daysRented, originalPrice]);
         res.sendStatus(201);
 
     } catch (e) {
         console.log(e);
-        res.status(500).send("Ocorreu um erro registrar o aluguél!");
+        res.status(500).send("Ocorreu um erro ao registrar o aluguel!");
+        return;
+    }
+}
+
+export async function finishRental(req, res) {
+    const { id } = req.params;
+
+    try {
+        const dateNow = dayjs(Date.now()).format("YYYY-MM-DD");
+        const result = await connection.query(`SELECT * FROM rentals WHERE id = $1;`, [id]);
+
+        let diff = moment(dateNow,"DD/MM/YYYY HH:mm:ss").diff(moment(result.rows.rentDate,"DD/MM/YYYY HH:mm:ss"));
+        let days = moment.duration(diff).asDays();
+        let valueToPay = (days - result.rows.daysRented) * (result.rows.originalPrice/result.rows.daysRented); 
+        
+        await connection.query(`UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3;`, [dateNow, valueToPay, id]);
+        res.sendStatus(200);
+
+    } catch (e) {
+        console.log(e);
+        res.status(500).send("Ocorreu um erro ao finalizar o aluguel!");
+        return;
+    }
+}
+
+export async function deleteRental(req, res) {
+    const { id } = req.params;
+
+    try {
+        await connection.query(`DELETE FROM rentals WHERE id = $1`, [id]);
+        res.sendStatus(200);
+
+    } catch (e) {
+        console.log(e);
+        res.status(500).send("Ocorreu um erro ao deletar o aluguel!");
         return;
     }
 }

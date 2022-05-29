@@ -21,7 +21,7 @@ export async function addCategory(req, res) {
 
     } catch (e) {
         console.log(e);
-        res.status(500).send("Ocorreu um erro registrar a categoria!");
+        res.status(500).send("Ocorreu um erro ao registrar categoria!");
         return;
     }
 }

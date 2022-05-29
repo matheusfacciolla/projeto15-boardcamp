@@ -32,7 +32,7 @@ export async function addGame(req, res) {
 
     } catch (e) {
         console.log(e);
-        res.status(500).send("Ocorreu um erro registrar o jogo!");
+        res.status(500).send("Ocorreu um erro ao registrar o jogo!");
         return;
     }
 }
