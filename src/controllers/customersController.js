@@ -23,7 +23,7 @@ export async function getCustomerById(req, res) {
     const { id } = req.params;
 
     try {
-        const result = await connection.query(`SELECT * FROM customers WHERE id LIKE $1`, [id]);
+        const result = await connection.query(`SELECT * FROM customers WHERE id = $1`, [id]);
 
         if (id) {
             res.status(200).send(result.rows);
