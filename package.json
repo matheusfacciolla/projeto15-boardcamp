@@ -13,6 +13,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@joi/date": "^2.1.0",
     "chalk": "^5.0.1",
     "cors": "^2.8.5",
     "dayjs": "^1.11.2",

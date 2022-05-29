@@ -58,3 +58,18 @@ export async function addCustomer(req, res) {
         return;
     }
 }
+
+export async function attCustomer(req, res) {
+    const { id } = req.params;
+    const { name, phone, cpf, birthday } = req.body;
+
+    try {
+        await connection.query(`UPDATE customers SET name = $1, phone = $2 cpf = $3, birthday = $4 WHERE id = $5;`, [name, phone, cpf, birthday, id]);
+        res.sendStatus(200);
+
+    } catch (e) {
+        console.log(e);
+        res.status(500).send("Ocorreu um erro ao atualizar o cliente!");
+        return;
+    }
+}

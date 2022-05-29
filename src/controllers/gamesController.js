@@ -5,12 +5,24 @@ export async function getAllGames(req, res) {
 
     try {
         if (name) {
-            const nameCapitalized = name.charAt(0).toUpperCase()+name.slice(1);
-            const result = await connection.query(`SELECT * FROM games WHERE (name LIKE $1 OR name LIKE $2)`, [`${nameCapitalized}%`, `${name}%`]);
+            const nameCapitalized = name.charAt(0).toUpperCase() + name.slice(1);
+            const result = await connection.query(`                
+            SELECT games.*, categories.name AS "categoryName"
+            FROM games
+            JOIN categories
+            ON games."categoryId"=categories.id
+            WHERE (games.name LIKE $1 OR games.name LIKE $2)`, [`${nameCapitalized}%`, `${name}%`]);
             res.status(200).send(result.rows);
+
         } else {
-            const result = await connection.query("SELECT * FROM games");
-            res.send(result.rows);
+            const result = await connection.query(`
+            SELECT games.*, categories.name AS "categoryName"
+            FROM games
+            JOIN categories 
+            ON games."categoryId" = categories.id;
+        `)
+
+        res.send(result.rows)
         }
 
     } catch (e) {
