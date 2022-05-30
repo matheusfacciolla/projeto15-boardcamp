@@ -7,7 +7,7 @@ export async function validateRental(req, res, next) {
     const { error } = rentalSchema.validate(req.body, { abortEarly: false });
 
     if (error) {
-        console.log(error)
+        console.log(error);
         res.status(400).send(error.details.map((detail) => detail.message));
         return;
     }
@@ -23,9 +23,6 @@ export async function validateRental(req, res, next) {
         for (let resultGame of resultGames.rows) {
             sumOfGames += resultGame.stockTotal;
         }
-
-        console.log("SOMA", sumOfGames)
-
 
         if (!resultGameId.rows[0] || !resultCustomerId.rows[0] || daysRented <= 0 || resultRentals.rows.length > sumOfGames) {
             res.sendStatus(400);
@@ -55,6 +52,8 @@ export async function validateDeleteAndFinishRental(req, res, next) {
             res.sendStatus(400);
             return;
         }
+        
+        next();
 
     } catch(e){
         console.log(e);
