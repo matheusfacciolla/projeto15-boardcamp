@@ -13,8 +13,8 @@ export async function validateRental(req, res, next) {
     }
 
     try {
-        const resultCustomerId = await connection.query(`SELECT * FROM customers WHERE id = $1`, [customerId]);
-        const resultGameId = await connection.query(`SELECT * FROM games WHERE id = $1`, [gameId]);
+        const resultCustomerId = await connection.query(`SELECT * FROM customers WHERE id = $1;`, [customerId]);
+        const resultGameId = await connection.query(`SELECT * FROM games WHERE id = $1;`, [gameId]);
         const resultRentals = await connection.query(`SELECT * FROM rentals`);
         const resultGames = await connection.query(`SELECT * FROM games`);
 
@@ -24,6 +24,8 @@ export async function validateRental(req, res, next) {
             sumOfGames += resultGame.stockTotal;
         }
 
+        console.log("SOMA", sumOfGames)
+
 
         if (!resultGameId.rows[0] || !resultCustomerId.rows[0] || daysRented <= 0 || resultRentals.rows.length > sumOfGames) {
             res.sendStatus(400);
@@ -32,7 +34,7 @@ export async function validateRental(req, res, next) {
 
     } catch (e) {
         console.log(e);
-        res.status(500).send("Ocorreu um erro registrar o aluguel!");
+        res.status(500).send("Ocorreu um erro...");
         return;
     }
 
@@ -42,15 +44,21 @@ export async function validateRental(req, res, next) {
 export async function validateDeleteAndFinishRental(req, res, next) {
     const { id } = req.params;
 
-    const resultRentals = await connection.query(`SELECT * FROM rentals WHERE id = 1$`, [id]);
+    try {
+        const resultRentals = await connection.query(`SELECT * FROM rentals WHERE id = $1;`, [id]);
+        if(!resultRentals.rows[0]){
+            res.sendStatus(404);
+            return;
+        }
+    
+        if(resultRentals.rows[0].returnDate != null){
+            res.sendStatus(400);
+            return;
+        }
 
-    if(resultRentals.rows.length === 0){
-        res.sendStatus(404);
-        return;
-    }
-
-    if(resultRentals.rows.returnDate != null){
-        res.sendStatus(400);
+    } catch(e){
+        console.log(e);
+        res.status(500).send("Ocorreu um erro...");
         return;
     }
 }

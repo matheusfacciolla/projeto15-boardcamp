@@ -9,16 +9,16 @@ export async function getAllRentals(req, res) {
     try {
         if (customerId || gameId) {
             const resultCustomerId = await connection.query(`SELECT * FROM rentals WHERE "customerId" = $1`, [customerId]);
-            const resultGameId = await connection.query(`SELECT * FROM rentals WHERE "gameId" = $1`, [ gameId]);
+            const resultGameId = await connection.query(`SELECT * FROM rentals WHERE "gameId" = $1`, [gameId]);
 
-            if(resultCustomerId.rows.length != 0){
+            if (resultCustomerId.rows.length != 0) {
                 res.status(200).send(resultCustomerId.rows);
             }
 
-            if(resultGameId.rows.length != 0){
+            if (resultGameId.rows.length != 0) {
                 res.status(200).send(resultGameId.rows);
             }
-            
+
         } else {
             const result = await connection.query(`
             SELECT rentals.*, customers.name AS "customerName", games.name AS "gameName", categories.id AS "categoryId", categories.name AS "categoryName" 
@@ -28,28 +28,28 @@ export async function getAllRentals(req, res) {
             JOIN categories ON games."categoryId" = categories.id;
         `)
 
-        let rentals = result.rows;
-        const rentalsList = [];
-        
-        for (let rental of rentals) {
-            rental = {
-                ...rental,
-                customer: {
-                    id: rental.customerId,
-                    name: rental.customerName
-                },
-                game: {
-                    id: rental.gameId,
-                    name: rental.gameName,
-                    categoryId: rental.categoryId,
-                    categoryName: rental.categoryName
+            let rentals = result.rows;
+            const rentalsList = [];
+
+            for (let rental of rentals) {
+                rental = {
+                    ...rental,
+                    customer: {
+                        id: rental.customerId,
+                        name: rental.customerName
+                    },
+                    game: {
+                        id: rental.gameId,
+                        name: rental.gameName,
+                        categoryId: rental.categoryId,
+                        categoryName: rental.categoryName
+                    }
                 }
+
+                rentalsList.push(rental);
             }
 
-            rentalsList.push(rental);
-        }
-
-        res.status(200).send(rentalsList);
+            res.status(200).send(rentalsList);
         }
 
     } catch (e) {
@@ -84,14 +84,18 @@ export async function finishRental(req, res) {
     const { id } = req.params;
 
     try {
-        const dateNow = dayjs(Date.now()).format("YYYY-MM-DD");
         const result = await connection.query(`SELECT * FROM rentals WHERE id = $1;`, [id]);
+        const returnDate = moment(dayjs(Date.now()).format("YYYY-MM-DD"));
+        const rentDate = moment(dayjs(result.rows[0].rentDate).format("YYYY-MM-DD"));
 
-        let diff = moment(dateNow,"DD/MM/YYYY HH:mm:ss").diff(moment(result.rows.rentDate,"DD/MM/YYYY HH:mm:ss"));
-        let days = moment.duration(diff).asDays();
-        let valueToPay = (days - result.rows.daysRented) * (result.rows.originalPrice/result.rows.daysRented); 
-        
-        await connection.query(`UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3;`, [dateNow, valueToPay, id]);
+        const days = returnDate.diff(rentDate, 'day');
+        const delayFee = days > 0 ? (result.rows[0].originalPrice / result.rows[0].daysRented) : 0;
+
+        await connection.query(`
+        UPDATE rentals 
+        SET "returnDate" = $1, "delayFee" = $2 
+        WHERE id = $3;`,
+            [returnDate, delayFee, id]);
         res.sendStatus(200);
 
     } catch (e) {
@@ -105,7 +109,7 @@ export async function deleteRental(req, res) {
     const { id } = req.params;
 
     try {
-        await connection.query(`DELETE FROM rentals WHERE id = $1`, [id]);
+        await connection.query(`DELETE FROM rentals WHERE id = $1;`, [id]);
         res.sendStatus(200);
 
     } catch (e) {
