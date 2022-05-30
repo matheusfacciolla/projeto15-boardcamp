@@ -45,7 +45,11 @@ export async function getAllRentals(req, res) {
                         categoryName: rental.categoryName
                     }
                 }
-
+                delete rental.customerName;
+                delete rental.gameName;
+                delete rental.categoryId;
+                delete rental.categoryName;
+                
                 rentalsList.push(rental);
             }
 
