@@ -15,16 +15,11 @@ export async function validateRental(req, res, next) {
     try {
         const resultCustomerId = await connection.query(`SELECT * FROM customers WHERE id = $1;`, [customerId]);
         const resultGameId = await connection.query(`SELECT * FROM games WHERE id = $1;`, [gameId]);
-        const resultRentals = await connection.query(`SELECT * FROM rentals`);
-        const resultGames = await connection.query(`SELECT * FROM games`);
+        const resultRentals = await connection.query(`SELECT * FROM rentals WHERE "gameId" = $1;`, [gameId]);
 
-        let sumOfGames = 0;
+        const filteredResultsRentals = resultRentals.rows.filter(rental => rental.returnDate === null)
 
-        for (let resultGame of resultGames.rows) {
-            sumOfGames += resultGame.stockTotal;
-        }
-
-        if (!resultGameId.rows[0] || !resultCustomerId.rows[0] || daysRented <= 0 || resultRentals.rows.length > sumOfGames) {
+        if (!resultGameId.rows[0] || !resultCustomerId.rows[0] || daysRented <= 0 || filteredResultsRentals.length >= resultGameId.rows[0].stockTotal ) {
             res.sendStatus(400);
             return;
         }
