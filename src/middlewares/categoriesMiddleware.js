@@ -7,7 +7,7 @@ export async function validateCategory(req, res, next) {
     const { error } = categorySchema.validate(req.body, { abortEarly: false });
 
     if (error) {
-        res.status(422).send(error.details.map((detail) => detail.message));
+        res.status(400).send(error.details.map((detail) => detail.message));
         return;
     }
 

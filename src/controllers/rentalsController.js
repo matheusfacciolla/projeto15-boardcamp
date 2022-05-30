@@ -49,7 +49,7 @@ export async function getAllRentals(req, res) {
                 delete rental.gameName;
                 delete rental.categoryId;
                 delete rental.categoryName;
-                
+
                 rentalsList.push(rental);
             }
 
@@ -98,8 +98,8 @@ export async function finishRental(req, res) {
         await connection.query(`
         UPDATE rentals 
         SET "returnDate" = $1, "delayFee" = $2 
-        WHERE id = $3;`,
-            [returnDate, delayFee, id]);
+        WHERE id = $3;
+        `, [returnDate, delayFee, id]);
         res.sendStatus(200);
 
     } catch (e) {

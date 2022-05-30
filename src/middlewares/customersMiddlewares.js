@@ -13,7 +13,7 @@ export async function validateCustomer(req, res, next) {
     }
     
     try {
-        const result = await connection.query(`SELECT * FROM customers WHERE name = $1`, [name]);   
+        const result = await connection.query(`SELECT * FROM customers WHERE cpf = $1`, [cpf]);   
         if (result.rows[0]) {
             res.sendStatus(409);
             return;
